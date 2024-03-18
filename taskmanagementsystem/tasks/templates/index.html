@@ -1,0 +1,53 @@
+{% extends "base.html" %}
+
+{% block content %}
+  <div class="row d-flex justify-content-center main-container ">
+    <div id="left_side" class="col-5 border pt-3">
+      <div style="height:80vh; overflow: auto;" >
+        {% include 'partials/_task_list.html' %}
+      </div>
+      <div class="text-center p-4">
+        <a href="{% url 'index' %}" type="button" class="btn btn-primary btn-lg">Adicionar nova tarefa</a>
+      </div>
+    </div>
+
+    <div id="right_side" class="col-7 border pt-5">
+      {% if selected_task %}
+        {% include 'partials/_show_task.html' %}
+      {% else %}
+          {% include 'partials/_task_form.html' %}
+      {% endif %}
+    </div>
+  </div>
+
+  <!-- 58px é o tamanho da navbar -->
+  <style>
+    .main-container{
+      height: calc(100% - 58px) !important;
+
+      @media (max-width : 500px) {
+        height: 100vh !important;
+      }
+    }
+  </style>
+
+  <script>
+    document.addEventListener('DOMContentLoaded', function () {
+      //ao dar refresh selecionar a tarefa q foi editada
+      function clickTaskLink(taskId) {
+        const taskLink = document.querySelector(`.task-link[data-task-id="${taskId}"]`);
+        if (taskLink) {
+          taskLink.click();
+          taskLink.scrollIntoView(false);
+        }
+      }
+
+      const urlParams = new URLSearchParams(window.location.search);
+      const taskIdParam = urlParams.get('task_id');
+      if (taskIdParam) {
+        clickTaskLink(taskIdParam);
+      }
+    });
+  </script>
+{% endblock %}
+

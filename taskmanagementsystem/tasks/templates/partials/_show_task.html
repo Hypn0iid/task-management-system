@@ -1,0 +1,38 @@
+<div class="container" style="height: 100%;">
+  <div class="">
+    <div class="row">
+      <h3>{{ selected_task.title }}</h3>
+    </div>
+    <br/>
+    <div class="ms-3">
+      <div class="row">
+        {{ selected_task.description|linebreaksbr }}
+      </div>
+      <br/>
+      <div class="row">
+        <div class="p-0 col-6">
+          Prioridade: {{ selected_task.get_priority_display }}
+        </div>
+        <div class="p-0 col-6">
+          Data Limite: {{ selected_task.due_date|default_if_none:"N/A" }}
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="d-flex justify-content-center" style="margin-top: 20%;">
+    <a href="{% url 'delete_task' selected_task.id %}" type="button" class="me-4" onclick="return confirm('Tem a certeza que quer eliminar a tarefa?');">
+      <i class="fa-solid fa-trash fa-2xl" style="color: #ff0000;"></i>
+    </a>
+    <!-- Tive de fazer esta barbaridade, porque o elemento recusava-se a dar com eventListeners ou com onclick e o nome da função, por isso meti a função direta no onclick -->
+    <a href="#" type="button" onclick="
+      fetch(`/edit_task/{{selected_task.id}}`)
+        .then(response => response.text())
+        .then(data => {
+          document.getElementById('right_side').innerHTML = data;
+        })
+        .catch(error => console.error(error));
+    " >
+      <i class="fa-solid fa-pen-to-square fa-2xl"></i>
+    </a>
+  </div>
+</div>

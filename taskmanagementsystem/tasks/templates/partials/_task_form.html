@@ -1,0 +1,99 @@
+{% if form %}
+  <form id="task-form" method="POST" action="{{ form_url|default:"create_task" }}">
+    {% csrf_token %}
+    {{ form.as_p }}
+    <div class="text-center">
+      <button type="submit" class="btn btn-primary">{{form_action|default:"Adicionar"}}</button>
+    </div>
+  </form>
+{% endif %}
+
+<script>
+  document.addEventListener('DOMContentLoaded', function () {
+    const taskForm = document.getElementById('task-form');
+    const taskListContainer = document.querySelector('#left_side .list-group');
+
+    //Gerar lista de tarefas c/ tarefa nova
+    function generateTaskListItem(task) {
+      const options = {
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric',
+      };
+
+      //eu sei que é muito estupido eu estar a repetir codigo aqui, mas foi como ficou a funcionar, oops :/
+      const due_date = task.due_date ? new Date(task.due_date).toLocaleDateString('pt-PT', options) : "N/A";
+      return `
+        <a href="#" class="list-group-item list-group-item-action task-link" data-task-id="${task.id}" data-priority="${task.priority}">
+          <input type="checkbox" class="task-checkbox form-check-input" data-task-id="${task.id}" ${task.is_completed ? 'checked' : ''}>
+          <div class="d-flex w-100 justify-content-between">
+            <h5 class="mb-1">${task.title}</h5>
+            <small>${due_date}</small>
+          </div>
+          <small>${task.description}</small>
+        </a>
+      `;
+    }
+
+    //atualizar lista
+    function updateTaskList(tasks) {
+      taskListContainer.innerHTML = tasks.map(task => generateTaskListItem(task)).join('');
+    }
+
+    //submissão do form
+    taskForm.addEventListener('submit', function (event) {
+      event.preventDefault();
+
+      const formData = new FormData(taskForm);
+
+      //ver se é para criar ou atualizar tarefa
+      const formAction = taskForm.getAttribute('action');
+
+      fetch(formAction, {
+          method: 'POST',
+          body: formData
+      })
+      .then(response => response.json())
+      .then(data => {
+        updateTaskList(data.tasks);
+        taskForm.reset();
+        toastr.success('Tarefa adicionada com sucesso!');
+
+        const newTaskLink = taskListContainer.querySelector(`[data-task-id="${data.new_task_id}"]`);
+        if (newTaskLink) {
+          newTaskLink.click();
+          newTaskLink.scrollIntoView(false);
+        }
+      })
+      .catch(error => {
+        toastr.error('Erro ao adicionar tarefa. Por favor, tente novamente.');
+        console.log(error)
+      });
+    });
+
+    //eventlistener para os  cliques na lista de tarefas
+    taskListContainer.addEventListener('click', function (event) {
+      event.preventDefault();
+
+      const taskLink = event.target.closest('.task-link');
+      if (taskLink) {
+        const taskId = taskLink.dataset.taskId;
+
+        taskListContainer.querySelectorAll('.task-link').forEach(link => {
+          link.classList.remove('active');
+          link.removeAttribute('aria-current');
+        });
+
+        taskLink.classList.add('active');
+        taskLink.setAttribute('aria-current', true);
+
+        fetch(`/get_task_details/${taskId}`)
+          .then(response => response.text())
+          .then(data => {
+              document.getElementById('right_side').innerHTML = data;
+          })
+          .catch(error => console.error('Erro ao ir buscar detalhes da tarefa:', error));
+      }
+    });
+  });
+</script>

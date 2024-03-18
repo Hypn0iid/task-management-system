@@ -1,0 +1,150 @@
+
+<h4 class="text-center mb-3">Lista de Tarefas</h4>
+
+<div class="mb-1">
+  <input type="text" id="search-input" class="form-control" placeholder="Procurar tarefas">
+</div>
+<!-- Não consigo ir buscar as prioridades à classe das tarefas por algum motivo :( -->
+<div class="mb-3">
+  <select class="form-select" id="priority-filter">
+    <option value="">Prioridades...</option>
+    <option value="0">Baixa</option>
+    <option value="1">Média</option>
+    <option value="2">Alta</option>
+  </select>
+</div>
+
+<div class="list-group">
+  {% if tasks %}
+    {% for task in tasks %}
+      <a href="#" class="list-group-item list-group-item-action task-link" data-task-id="{{ task.id }}" data-priority="{{ task.priority }}">
+        <input type="checkbox" class="task-checkbox form-check-input" data-task-id="{{ task.id }}" {% if task.is_completed %}checked{% endif %}>
+        <div class="d-flex w-100 justify-content-between">
+          <h5 class="mb-1">{{ task.title }}</h5>
+          <small>
+            {{ task.due_date|default_if_none:"N/A" }}
+          </small>
+        </div>
+        <small class="description">{{ task.description }}</small>
+      </a>
+    {% endfor %}
+  {% endif %}
+</div>
+
+<style>
+  .list-group-item {
+    height: 100px;
+    overflow: hidden;
+    padding-bottom: 6em;
+    position: relative; /* Add relative positioning to the container */
+  }
+
+  .task-checkbox {
+    position: absolute;
+    bottom: 10px;
+    right: 10px;
+    width: 25px;
+    height: 25px;
+  }
+
+  .description {
+    display: -webkit-box;
+    -webkit-line-clamp: 3;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    margin-bottom: 10px;
+  }
+</style>
+
+<script>
+  document.addEventListener('DOMContentLoaded', function () {
+    function handleTaskLinkClick(event) {
+      event.preventDefault();
+      const taskId = this.dataset.taskId;
+
+      document.querySelectorAll('.task-link').forEach(link => {
+        link.classList.remove('active');
+        link.removeAttribute('aria-current');
+      });
+
+      this.classList.add('active');
+      this.setAttribute('aria-current', 'page');
+
+      //mostrar detalhes da tarefa
+      fetch(`/get_task_details/${taskId}`)
+        .then(response => response.text())
+        .then(data => {
+          document.getElementById('right_side').innerHTML = data;
+        })
+        .catch(error => console.error('Error loading task details:', error));
+    }
+
+    // adicionar eventListener a task-links
+    function addTaskLinkEventListeners() {
+      const taskLinks = document.querySelectorAll('.task-link');
+      taskLinks.forEach(function (taskLink) {
+        taskLink.addEventListener('click', handleTaskLinkClick);
+      });
+    }
+
+    addTaskLinkEventListeners();
+
+    // filtro de prioridades
+    document.getElementById('priority-filter').addEventListener('change', function () {
+      const selectedPriority = this.value;
+      const taskLinks = document.querySelectorAll('.task-link');
+
+      taskLinks.forEach(taskLink => {
+        const taskPriority = taskLink.dataset.priority;
+        if (!selectedPriority || taskPriority === selectedPriority) {
+          taskLink.style.display = 'block';
+        } else {
+          taskLink.style.display = 'none';
+        }
+      });
+    });
+
+    //procurar tarefas por título
+    document.getElementById('search-input').addEventListener('input', function () {
+      const searchQuery = this.value.toLowerCase();
+      const taskLinks = document.querySelectorAll('.task-link');
+
+      taskLinks.forEach(taskLink => {
+        const taskTitle = taskLink.querySelector('h5').textContent.toLowerCase();
+        if (taskTitle.includes(searchQuery)) {
+          taskLink.style.display = 'block';
+        } else {
+          taskLink.style.display = 'none';
+        }
+      });
+    });
+
+    const csrftoken = document.querySelector('[name=csrfmiddlewaretoken]').value;
+    // toggle tarefa completa
+    document.querySelectorAll('.task-checkbox').forEach(function (checkbox) {
+      checkbox.addEventListener('click', function (event) {
+        event.stopPropagation();// nao clicar na anchor quando clico na checkbox
+        const taskId = this.dataset.taskId;
+        const isCompleted = this.checked;
+
+        fetch(`/toggle_task_completion/${taskId}`, {
+            method: 'POST',
+            body: JSON.stringify({ is_completed: isCompleted }),
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': csrftoken
+            }
+        })
+        .then(response => {
+            if (response.ok) {
+              toastr.success('Tarefa adicionada com sucesso!');
+            } else {
+              toastr.error('Erro!');
+            }
+        })
+        .catch(error => console.error('Error toggling task completion:', error));
+      });
+    });
+  });
+</script>

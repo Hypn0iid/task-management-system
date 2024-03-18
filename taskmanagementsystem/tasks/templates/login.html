@@ -1,0 +1,35 @@
+{% extends "base.html" %}
+
+{% block content %}
+  <section class="vh-100">
+    <div class="container py-5 h-100">
+      <h2 class="text-center">Organizador de Tarefas</h2>
+      <div class="row d-flex align-items-center justify-content-center h-100">
+        <div class="col-md-8 col-lg-7 col-xl-6">
+          <img src="https://mdbcdn.b-cdn.net/img/Photos/new-templates/bootstrap-login-form/draw2.svg"
+            class="img-fluid" alt="Task login image">
+        </div>
+        <div class="col-md-7 col-lg-5 col-xl-5 offset-xl-1">
+          <h4 class="text-center mb-5">Iniciar Sessão</h4>
+          <form method="POST" action="{% url 'login' %}">
+            {% csrf_token %}
+
+            <div class="form-outline mb-4">
+              <input type="text" placeholder="Nome do utilizador" name="username" class="form-control form-control-lg" />
+            </div>
+
+            <div class="form-outline mb-4">
+              <input type="password" placeholder="Password" name="password" class="form-control form-control-lg" />
+            </div>
+
+            <div class="row m-auto">
+              <button type="submit" class="btn btn-primary btn-lg">Entrar</button>
+              <a class="text-end" href="{% url 'register' %}" role="button">Registar</a>
+            </div>
+
+          </form>
+        </div>
+      </div>
+    </div>
+  </section>
+{% endblock %}
