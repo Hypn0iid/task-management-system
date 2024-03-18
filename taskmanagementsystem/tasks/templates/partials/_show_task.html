@@ -10,11 +10,14 @@
       </div>
       <br/>
       <div class="row">
-        <div class="p-0 col-6">
+        <div class="p-0 col-4">
           Prioridade: {{ selected_task.get_priority_display }}
         </div>
-        <div class="p-0 col-6">
+        <div class="p-0 col-4">
           Data Limite: {{ selected_task.due_date|default_if_none:"N/A" }}
+        </div>
+        <div class="p-0 col-4">
+          Tarefa concluída?: {{ selected_task.is_completed|yesno:"Sim,Não" }}
         </div>
       </div>
     </div>
